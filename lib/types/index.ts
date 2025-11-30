@@ -1,4 +1,4 @@
-export type TruckStatus = 'on-time' | 'delayed' | 'critical';
+export type TruckStatus = 'on-time' | 'delayed' | 'critical' | 'resolved';
 
 export interface Truck {
   id: string;

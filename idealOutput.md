@@ -24,11 +24,11 @@ Result: Smooth transition to /dashboard.
 
 3. The Dashboard (Command Center)
 
-Map: Full-screen OpenStreetMap with Inverted Dark Tiles.
+Map: Full-screen OpenStreetMap with Inverted Dark Tiles and OSRM routing.
 
 Markers:
 
-3 Green Trucks (Moving smoothly).
+3 Green Trucks (Moving smoothly with real routes from OSRM API).
 
 1 Red Truck (Stopped).
 
@@ -50,7 +50,7 @@ Content:
 
 Button: "Auto-Book Relief Truck".
 
-After Click: Truck turns Purple. Confetti/Glow effect.
+After Click: Truck turns Purple. Confetti/Glow effect with a 2-second particle burst.
 
 4. Customer Tracking (/track/ORD-402)
 
@@ -66,4 +66,5 @@ Latency: Map updates <500ms.
 
 Responsiveness: Sidebar collapses on mobile. Map remains full screen.
 
-Theme: No white text on white backgrounds. Strict Dark Mode enforcement.
+Theme: No white text on white backgrounds. Strict Dark Mode enforcement with dark map tiles.
+
