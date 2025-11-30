@@ -1,0 +1,51 @@
+{
+  "contractId": "CNT-2024-001",
+  "client": {
+    "name": "TechCorp India Pvt Ltd",
+    "address": "Mumbai, Maharashtra, India",
+    "contact": "+91 22 1234 5678"
+  },
+  "serviceProvider": {
+    "name": "ChainReaction Logistics",
+    "address": "Pune, Maharashtra, India"
+  },
+  "deliveryTerms": {
+    "origin": "Pune, Maharashtra",
+    "destination": "Mumbai, Maharashtra",
+    "expectedDuration": "3 hours",
+    "cargoDescription": "Electronic Components",
+    "cargoValue": 120000,
+    "weight": "2500 kg",
+    "specialHandling": "Temperature controlled, fragile"
+  },
+  "slaTerms": {
+    "onTimeDeliveryThreshold": "3 hours",
+    "penaltyStructure": {
+      "hour1": 500,
+      "hour2": 500,
+      "hour3": 500,
+      "hour4": 500,
+      "hour5": 500,
+      "maxPenalty": 2500
+    },
+    "escalationRules": [
+      "Delay > 1 hour: Notify customer",
+      "Delay > 2 hours: Critical status",
+      "Delay > 3 hours: Penalties apply"
+    ]
+  },
+  "financialTerms": {
+    "baseRate": 5000,
+    "insuranceCoverage": 150000,
+    "paymentTerms": "Net 30 days",
+    "penaltyDeduction": "Automatic from invoice"
+  },
+  "forcemajeure": [
+    "Natural disasters",
+    "Government-mandated road closures",
+    "Acts of war or terrorism",
+    "Pandemic-related restrictions"
+  ],
+  "signedDate": "2024-11-01",
+  "validUntil": "2025-11-01"
+}

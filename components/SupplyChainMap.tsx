@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
-import { Truck } from '@/lib/types';
-import { Truck as TruckIcon, Navigation, Package } from 'lucide-react';
+import React from 'react';
+import {MapContainer, TileLayer, Marker, Polyline, Popup} from 'react-leaflet';
+import {Truck} from '@/lib/types';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 

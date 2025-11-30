@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Home, Leaf, RefreshCcw } from 'lucide-react';
+import { Zap, Home, Leaf } from 'lucide-react';
 import { useSupplyChainStream } from '@/lib/hooks/useSupplyChainStream';
 import AgentOverlay from '@/components/dashboard/AgentOverlay';
 import FinancialModal from '@/components/dashboard/FinancialModal';
+import UserMenu from '@/components/dashboard/UserMenu';
 
 export default function DashboardPage() {
   const [ecoRouteEnabled, setEcoRouteEnabled] = useState(false);
@@ -25,6 +26,10 @@ export default function DashboardPage() {
         </Link>
         <nav className="space-y-2">
           <Link href="/dashboard"><div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-400"><Home className="w-5 h-5" /><span className="font-medium">Dashboard</span></div></Link>
+            <Link href="/analytics">
+                <div
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/5 text-slate-300 hover:text-white transition-colors">
+                    <span className="w-5 h-5 flex items-center justify-center">📊</span><span className="font-medium">Analytics</span></div></Link>
         </nav>
         <div className="absolute bottom-6 left-6 right-6">
           <div className="glass-card p-4 rounded-lg">
@@ -52,6 +57,7 @@ export default function DashboardPage() {
                 </button>
               </div>
               <button onClick={() => setAgentPanelOpen(!agentPanelOpen)} className="btn-ghost px-4 py-2 rounded-lg flex items-center gap-2"><span className="text-sm font-medium text-white">Agent</span></button>
+                <UserMenu/>
             </div>
           </div>
           <div className="grid grid-cols-4 gap-4 mt-4">
@@ -62,16 +68,25 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Map Placeholder */}
-        <div className="flex-1 relative bg-slate-900/50 border border-white/5">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-4">🗺️</div>
-              <h3 className="text-2xl font-bold text-white mb-2">Live Map</h3>
-              <p className="text-slate-400">Truck TRK-402 • Pune, India</p>
-              <p className="text-sm text-slate-500 mt-2">Wait 12 seconds for arbitrage opportunity...</p>
-            </div>
-          </div>
+        {/* Map Placeholder - To be integrated by your friend */}
+          <div className="flex-1 relative bg-slate-900/50 border border-white/5">
+              <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center max-w-md">
+                      <div className="text-6xl mb-4">🗺️</div>
+                      <h3 className="text-2xl font-bold text-white mb-2">Map Integration Placeholder</h3>
+                      <p className="text-slate-400 mb-4">Interactive truck tracking map will be integrated here</p>
+                      <div className="glass-card p-4 rounded-lg text-left">
+                          <p className="text-sm text-slate-400 mb-2">Features to integrate:</p>
+                          <ul className="text-sm text-slate-300 space-y-1">
+                              <li>• Real-time truck positions</li>
+                              <li>• Route visualization</li>
+                              <li>• Status indicators (green/yellow/red)</li>
+                              <li>• Interactive markers</li>
+                          </ul>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-4">Component: SupplyChainMap.tsx</p>
+                  </div>
+              </div>
           <AnimatePresence>
             {agentPanelOpen && <AgentOverlay events={events} isOpen={agentPanelOpen} onClose={() => setAgentPanelOpen(false)} />}
           </AnimatePresence>

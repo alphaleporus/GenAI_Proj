@@ -1,12 +1,24 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import {useState} from 'react';
+import {motion} from 'framer-motion';
 import Link from 'next/link';
-import { Zap, Globe, ArrowRight, Sparkles } from 'lucide-react';
+import {useRouter} from 'next/navigation';
+import {Zap, Globe, ArrowRight, Sparkles, Package, Search } from 'lucide-react';
 import FeatureCards from '@/components/landing/FeatureCards';
 
 export default function LandingPage() {
-  return (
+    const router = useRouter();
+    const [orderId, setOrderId] = useState('');
+
+    const handleTrackOrder = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (orderId.trim()) {
+            router.push(`/track/${orderId.trim()}`);
+        }
+    };
+
+    return (
     <div className="min-h-screen gradient-bg">
       {/* Navbar */}
       <nav className="fixed top-0 w-full z-50 glass-nav">
@@ -23,7 +35,9 @@ export default function LandingPage() {
               <Link href="#solutions" className="text-sm text-slate-300 hover:text-white transition-colors">Solutions</Link>
             </div>
             <div className="flex items-center gap-4">
-              <button className="btn-ghost px-4 py-2 rounded-lg text-sm">Login</button>
+              <Link href="/login">
+                  <button className="btn-ghost px-4 py-2 rounded-lg text-sm">Login</button>
+              </Link>
               <Link href="/dashboard"><button className="btn-primary px-6 py-2 rounded-lg text-sm flex items-center gap-2">Book Demo<ArrowRight className="w-4 h-4" /></button></Link>
             </div>
           </div>
@@ -87,6 +101,66 @@ export default function LandingPage() {
               </div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Customer Tracking Section */}
+        <section className="py-20 px-6 relative">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-teal-500/5 to-transparent"/>
+            <div className="max-w-4xl mx-auto relative z-10">
+                <motion.div
+                    initial={{opacity: 0, y: 20}}
+                    whileInView={{opacity: 1, y: 0}}
+                    viewport={{once: true}}
+                    className="glass-card rounded-3xl p-8 md:p-12 border border-teal-500/20"
+                >
+                    <div className="text-center mb-8">
+                        <div
+                            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30 mb-4">
+                            <Package className="w-8 h-8 text-teal-400"/>
+                        </div>
+                        <h2 className="text-3xl lg:text-4xl font-bold text-white mb-3">Track Your Order</h2>
+                        <p className="text-lg text-slate-400">Enter your order ID to get real-time tracking updates</p>
+                    </div>
+
+                    <form onSubmit={handleTrackOrder} className="max-w-2xl mx-auto">
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"/>
+                                <input
+                                    type="text"
+                                    value={orderId}
+                                    onChange={(e) => setOrderId(e.target.value)}
+                                    placeholder="Enter Order ID (e.g., ORD-402)"
+                                    className="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-800/50 border border-white/10 text-white placeholder-slate-500 focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 transition-all outline-none text-lg"
+                                />
+                            </div>
+                            <motion.button
+                                type="submit"
+                                whileHover={{scale: 1.02}}
+                                whileTap={{scale: 0.98}}
+                                className="btn-primary px-8 py-4 rounded-xl text-lg font-semibold whitespace-nowrap"
+                            >
+                                Track Order
+                            </motion.button>
+                        </div>
+                    </form>
+
+                    <div className="mt-6 text-center">
+                        <p className="text-sm text-slate-500">Try sample: </p>
+                        <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                            {['ORD-402', 'ORD-305', 'ORD-518'].map((sampleId) => (
+                                <button
+                                    key={sampleId}
+                                    onClick={() => router.push(`/track/${sampleId}`)}
+                                    className="px-4 py-2 rounded-lg bg-slate-800/50 border border-white/10 text-teal-400 text-sm font-mono hover:bg-slate-800 hover:border-teal-500/30 transition-all"
+                                >
+                                    {sampleId}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </motion.div>
         </div>
       </section>
 
