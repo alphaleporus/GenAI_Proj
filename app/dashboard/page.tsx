@@ -5,7 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Home, Leaf, BarChart3 } from 'lucide-react';
-import { useSupplyChainStream } from '@/lib/hooks/useSupplyChainStream';
+import { useWebSocket } from '@/lib/hooks/useWebSocket';
 import AgentOverlay from '@/components/dashboard/AgentOverlay';
 import FinancialModal from '@/components/dashboard/FinancialModal';
 import UserMenu from '@/components/dashboard/UserMenu';
@@ -32,7 +32,7 @@ const SupplyChainMap = dynamic(() => import('@/components/SupplyChainMap'), {
 
 export default function DashboardPage() {
   const [ecoRouteEnabled, setEcoRouteEnabled] = useState(false);
-  const { trucks, events, arbitrageOpportunity, executeArbitrage, dismissArbitrage } = useSupplyChainStream();
+  const { trucks, events, arbitrageOpportunity, executeArbitrage, dismissArbitrage, connected, error } = useWebSocket();
 
   // Calculate total cargo value
   const totalCargoValue = trucks.reduce((sum, truck) => sum + truck.cargoValue, 0);
@@ -63,9 +63,16 @@ export default function DashboardPage() {
           <div className="glass-card p-4 rounded-lg">
             <div className="text-xs text-slate-500 uppercase mb-2">System Status</div>
             <div className="flex items-center gap-2">
-              <motion.div animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Infinity }} className="w-2 h-2 bg-teal-500 rounded-full" />
-              <span className="text-sm font-semibold text-teal-400 mono-numbers">LIVE</span>
+              <motion.div animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Infinity }} className={`w-2 h-2 rounded-full ${connected ? 'bg-teal-500' : 'bg-red-500'}`} />
+              <span className={`text-sm font-semibold mono-numbers ${connected ? 'text-teal-400' : 'text-red-400'}`}>
+                {connected ? 'LIVE' : 'OFFLINE'}
+              </span>
             </div>
+            {error && (
+              <div className="text-xs text-red-400 mt-2">
+                {error}
+              </div>
+            )}
           </div>
         </div>
       </div>

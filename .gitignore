@@ -74,13 +74,19 @@ backend/__pycache__/
 backend/*.pyc
 backend/venv/
 backend/env/
+backend-pathway/venv-pathway/
+backend-pathway/__pycache__/
+backend-pathway/**/__pycache__/
+backend-pathway/output/*.jsonl
+backend-pathway/*.log
 
 # OS
 .DS_Store
 Thumbs.db
 
 # Logs
-logs/
+logs/*
+!logs/.gitkeep
 *.log
 
 # Temporary files
@@ -90,3 +96,6 @@ temp/
 *.swp
 *.swo
 *~
+
+# Demo script artifacts
+.demo-pids

@@ -15,12 +15,14 @@ interface SupplyChainMapProps {
   ecoMode: boolean;
 }
 
-// Component to handle map bounds based on trucks
+// Component to handle map bounds based on trucks (only on initial load)
 function MapBoundsHandler({ trucks }: { trucks: Truck[] }) {
   const map = useMap();
+  const hasSetBoundsRef = useRef(false);
   
   useEffect(() => {
-    if (trucks.length === 0) return;
+    // Only set bounds once when trucks first load
+    if (trucks.length === 0 || hasSetBoundsRef.current) return;
     
     // Calculate bounds from all truck positions and routes
     const allPoints: [number, number][] = [];
@@ -36,22 +38,27 @@ function MapBoundsHandler({ trucks }: { trucks: Truck[] }) {
     if (allPoints.length > 0) {
       const bounds = L.latLngBounds(allPoints);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 8 });
+      hasSetBoundsRef.current = true;
     }
-  }, [trucks, map]);
+  }, [trucks.length, map]); // Only depend on trucks.length, not the entire trucks array
   
   return null;
 }
 
-// Custom centering button component
+// Custom centering button component (stable, no re-renders)
 function CenterButton({ trucks }: { trucks: Truck[] }) {
   const map = useMap();
+  const buttonCreatedRef = useRef(false);
   
   useEffect(() => {
-    // Wait for zoom control to be added
+    // Only create button once
+    if (buttonCreatedRef.current) return;
+    
     const checkZoomControl = setInterval(() => {
       const zoomControl = document.querySelector('.leaflet-control-zoom');
-      if (zoomControl) {
+      if (zoomControl && !buttonCreatedRef.current) {
         clearInterval(checkZoomControl);
+        buttonCreatedRef.current = true;
         
         // Create center button
         const button = L.DomUtil.create('a', 'leaflet-control-center', zoomControl as HTMLElement);
@@ -73,13 +80,16 @@ function CenterButton({ trucks }: { trucks: Truck[] }) {
         L.DomEvent.on(button, 'click', function(e: Event) {
           e.preventDefault();
           
-          if (trucks.length === 0) {
+          // Get current trucks from the DOM or parent
+          const currentTrucks = trucks;
+          
+          if (currentTrucks.length === 0) {
             map.setView(INDIA_CENTER, 5);
             return;
           }
           
           const allPoints: [number, number][] = [];
-          trucks.forEach(truck => {
+          currentTrucks.forEach(truck => {
             allPoints.push([truck.position[1], truck.position[0]]);
             if (truck.route && truck.route.length > 0) {
               truck.route.forEach(point => {
@@ -225,6 +235,7 @@ export default function SupplyChainMap({ trucks, ecoMode }: SupplyChainMapProps)
             </Marker>
           </React.Fragment>
         ))}
+
       </MapContainer>
 
       {/* Legend */}

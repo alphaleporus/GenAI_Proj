@@ -1,12 +1,17 @@
 'use client';
 
 import {useState} from 'react';
-import {signOut, useSession} from 'next-auth/react';
 import {motion, AnimatePresence} from 'framer-motion';
 import {User, LogOut, Settings, ChevronDown, X, Bell, Moon, Globe, Shield} from 'lucide-react';
 
+// Mock user for demo purposes (no authentication needed)
+const demoUser = {
+    name: 'Demo User',
+    email: 'demo@fleetfusion.com',
+    role: 'Demo',
+};
+
 export default function UserMenu() {
-    const {data: session} = useSession();
     const [isOpen, setIsOpen] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [settings, setSettings] = useState({
@@ -16,10 +21,13 @@ export default function UserMenu() {
         autoSave: true,
     });
 
-    if (!session?.user) return null;
+    // Use demo user instead of session
+    const user = demoUser;
 
-    const handleSignOut = async () => {
-        await signOut({callbackUrl: '/login'});
+    const handleSignOut = () => {
+        // For demo, just close the menu
+        setIsOpen(false);
+        alert('Sign out disabled in demo mode');
     };
 
     const handleOpenSettings = () => {
@@ -39,8 +47,8 @@ export default function UserMenu() {
                         <User className="w-4 h-4 text-teal-400"/>
                     </div>
                     <div className="hidden sm:block text-left">
-                        <div className="text-sm font-semibold text-white">{session.user.name}</div>
-                        <div className="text-xs text-slate-400">{session.user.email}</div>
+                        <div className="text-sm font-semibold text-white">{user.name}</div>
+                        <div className="text-xs text-slate-400">{user.email}</div>
                     </div>
                     <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}/>
                 </button>
@@ -62,8 +70,8 @@ export default function UserMenu() {
                                 className="absolute right-0 mt-2 w-56 glass-card rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden"
                             >
                                 <div className="p-3 border-b border-white/10">
-                                    <div className="text-sm font-semibold text-white">{session.user.name}</div>
-                                    <div className="text-xs text-slate-400">{session.user.email}</div>
+                                    <div className="text-sm font-semibold text-white">{user.name}</div>
+                                    <div className="text-xs text-slate-400">{user.email}</div>
                                 </div>
 
                                 <div className="p-2">
@@ -134,19 +142,19 @@ export default function UserMenu() {
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <div className="text-sm text-slate-400">Name</div>
-                                                <div className="text-white font-medium">{session.user.name}</div>
+                                                <div className="text-white font-medium">{user.name}</div>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <div className="text-sm text-slate-400">Email</div>
-                                                <div className="text-white font-medium">{session.user.email}</div>
+                                                <div className="text-white font-medium">{user.email}</div>
                                             </div>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <div className="text-sm text-slate-400">Role</div>
-                                                <div className="text-teal-400 font-medium">Demo User</div>
+                                                <div className="text-teal-400 font-medium">{user.role}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -253,7 +261,6 @@ export default function UserMenu() {
                                     <button
                                         onClick={() => {
                                             setShowSettings(false);
-                                            // Here you would typically save settings to backend
                                         }}
                                         className="px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-600 text-white font-semibold transition-colors"
                                     >

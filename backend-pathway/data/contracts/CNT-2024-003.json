@@ -1,0 +1,18 @@
+{
+  "contract_id": "CNT-2024-003",
+  "client": "AutoParts Express",
+  "route": "Kolkata to Bhubaneswar",
+  "cargo_value": 95000,
+  "delivery_deadline_hours": 5,
+  "penalty_per_hour": 350,
+  "max_penalty": 1750,
+  "terms": "STANDARD FREIGHT AGREEMENT\n\nClient: AutoParts Express\n\nDELIVERY SPECIFICATIONS:\n- Standard freight service\n- Delivery window: 5 hours\n- No special handling required\n\nPENALTY STRUCTURE:\n- $350 per hour of delay\n- Maximum penalty: $1,750\n- Payment due within 30 days\n\nLIABILITY:\n- Carrier liable for cargo damage up to declared value\n- Insurance certificate provided",
+  "spot_market_alternatives": [
+    {
+      "provider": "Eastern Express",
+      "cost": 650,
+      "eta_minutes": 60,
+      "reliability": 0.92
+    }
+  ]
+}

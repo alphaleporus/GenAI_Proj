@@ -1,0 +1,24 @@
+{
+  "contract_id": "CNT-2024-001",
+  "client": "TechCorp India Pvt Ltd",
+  "route": "Pune to Mumbai",
+  "cargo_value": 120000,
+  "delivery_deadline_hours": 3,
+  "penalty_per_hour": 500,
+  "max_penalty": 2500,
+  "terms": "LOGISTICS SERVICE AGREEMENT\n\nClient: TechCorp India Pvt Ltd\nService Provider: FleetFusion Logistics\n\nDELIVERY TERMS:\n- Origin: Pune, Maharashtra\n- Destination: Mumbai, Maharashtra\n- Expected Duration: 3 hours\n- Cargo Value: $120,000\n\nPENALTY CLAUSE:\nIn the event of delayed delivery, the Service Provider shall pay:\n- $500 per hour for the first 5 hours of delay\n- Maximum penalty capped at $2,500\n- Penalties automatically deducted from invoice\n\nFORCE MAJEURE:\nWeather, natural disasters, and government-mandated closures exempt from penalties.",
+  "spot_market_alternatives": [
+    {
+      "provider": "QuickFreight India",
+      "cost": 800,
+      "eta_minutes": 45,
+      "reliability": 0.95
+    },
+    {
+      "provider": "RapidLogistics",
+      "cost": 950,
+      "eta_minutes": 30,
+      "reliability": 0.98
+    }
+  ]
+}

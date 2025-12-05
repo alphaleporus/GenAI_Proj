@@ -33,6 +33,16 @@ export default function AgentOverlay({ events }: AgentOverlayProps) {
     }
   };
 
+  const formatTimestamp = (timestamp: Date | string): string => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    return date.toLocaleTimeString();
+  };
+
+  const getTimestampKey = (timestamp: Date | string): string => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    return date.getTime().toString();
+  };
+
   return (
     <motion.div
       initial={{ x: 100, opacity: 0 }}
@@ -61,7 +71,7 @@ export default function AgentOverlay({ events }: AgentOverlayProps) {
 
           return (
             <motion.div
-              key={`${event.id}-${event.timestamp.getTime()}-${index}`}
+              key={`${event.id}-${getTimestampKey(event.timestamp)}-${index}`}
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
@@ -75,8 +85,8 @@ export default function AgentOverlay({ events }: AgentOverlayProps) {
                   <p className="text-sm text-slate-200 leading-relaxed">
                     {event.message}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1 font-mono">
-                    {new Date(event.timestamp).toLocaleTimeString()}
+                  <p className="text-xs text-slate-500 mt-1 font-mono" suppressHydrationWarning>
+                    {formatTimestamp(event.timestamp)}
                   </p>
                 </div>
               </div>

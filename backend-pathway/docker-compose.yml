@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  pathway-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fleetfusion-pathway
+    ports:
+      - "8080:8080"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/app/data:ro
+      - ./output:/app/output
+    restart: unless-stopped
+    networks:
+      - fleetfusion
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import os; exit(0 if os.path.exists('output/truck_status.jsonl') else 1)" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  fleetfusion:
+    driver: bridge
