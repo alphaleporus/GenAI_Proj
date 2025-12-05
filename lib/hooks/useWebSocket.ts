@@ -6,6 +6,7 @@ import {Truck, AgentEvent, ArbitrageOpportunity} from '../types';
 interface WebSocketDataMessage {
     trucks?: Truck[];
     events?: AgentEvent[];
+    arbitrage?: ArbitrageOpportunity | null;
 }
 
 interface WebSocketMessage {
@@ -23,7 +24,49 @@ interface WebSocketState {
     error: string | null;
 }
 
-export function useWebSocket(url: string = 'ws://localhost:8080') {
+// Track dismissed/executed arbitrage opportunities to prevent re-showing
+const dismissedArbitrageSet = new Set<string>();
+
+// Track trucks that have had arbitrage solutions executed (resolved)
+const resolvedTrucksSet = new Set<string>();
+
+// Track connection time to ignore stale arbitrage from previous runs
+let connectionTimestamp = 0;
+
+// Process trucks - just pass through, backend sends correct routes
+function processTrucks(trucks: Truck[]): Truck[] {
+    // Validate that each truck has a route from the backend
+    return trucks.map(truck => {
+        // Ensure route exists and is properly formatted
+        if (!truck.route || !Array.isArray(truck.route) || truck.route.length === 0) {
+            console.warn(`⚠️ Truck ${truck.id} has invalid route:`, truck.route);
+            // Provide fallback route if missing
+            return {
+                ...truck,
+                route: truck.position && truck.destination 
+                    ? [truck.position, truck.destination] 
+                    : [[0, 0], [0, 0]]
+            };
+        }
+        
+        // Verify position is in correct format [lon, lat]
+        if (!truck.position || truck.position.length !== 2) {
+            console.warn(`⚠️ Truck ${truck.id} has invalid position:`, truck.position);
+        }
+        
+        // Log route info for debugging (only for first few trucks)
+        const truckIndex = trucks.indexOf(truck);
+        if (truckIndex < 3) {
+            console.log(`🚛 ${truck.id}: position [${truck.position[0].toFixed(4)}, ${truck.position[1].toFixed(4)}], ` +
+                       `route has ${truck.route.length} points`);
+        }
+        
+        // Return truck with backend route (no modification)
+        return truck;
+    });
+}
+
+export function useWebSocket(url: string = 'ws://localhost:8765') {
     const [state, setState] = useState<WebSocketState>({
         trucks: [],
         events: [],
@@ -40,23 +83,99 @@ export function useWebSocket(url: string = 'ws://localhost:8080') {
     const handleMessage = useCallback((message: WebSocketMessage) => {
         switch (message.type) {
             case 'initial_state':
-            case 'state_update':
+                // Don't show arbitrage from initial state (it's stale)
                 if (message.data && 'trucks' in message.data) {
                     const data = message.data as WebSocketDataMessage;
+                    
                     setState(prev => ({
                         ...prev,
-                        trucks: data.trucks || prev.trucks,
+                        trucks: data.trucks ? processTrucks(data.trucks) : prev.trucks,
                         events: data.events || prev.events,
+                        // Don't set arbitrage from initial state
                     }));
                 }
                 break;
 
+            case 'state_update':
+                if (message.data && 'trucks' in message.data) {
+                    const data = message.data as WebSocketDataMessage;
+                    
+                    setState(prev => {
+                        const newState = { ...prev };
+                        
+                        // Process trucks - use backend routes directly
+                        if (data.trucks && data.trucks.length > 0) {
+                            newState.trucks = processTrucks(data.trucks);
+                        }
+                        
+                        // Update events - filter out critical alerts for resolved trucks
+                        if (data.events && data.events.length > 0) {
+                            // Filter out critical events for trucks that have been resolved
+                            newState.events = data.events.filter(event => {
+                                // Check if this is a critical alert for a resolved truck
+                                const isCriticalAlert = event.message.includes('CRITICAL') && event.severity === 'critical';
+                                if (isCriticalAlert) {
+                                    // Extract truck ID from message (format: "⚠️ TRK-402 CRITICAL - ...")
+                                    const truckIdMatch = event.message.match(/TRK-\d+/);
+                                    if (truckIdMatch) {
+                                        const truckId = truckIdMatch[0];
+                                        if (resolvedTrucksSet.has(truckId)) {
+                                            console.log(`🚫 Filtering critical event for resolved truck ${truckId}`);
+                                            return false; // Don't show this event
+                                        }
+                                    }
+                                }
+                                return true; // Show all other events
+                            });
+                        }
+                        
+                        // Check for arbitrage in the data - but only if fresh and not dismissed
+                        if (data.arbitrage && data.arbitrage.truckId) {
+                            const arbitrageKey = data.arbitrage.truckId;
+                            const isFresh = isArbitrageFresh();
+                            const isDismissed = dismissedArbitrageSet.has(arbitrageKey);
+                            const hasExisting = !!prev.arbitrageOpportunity;
+                            
+                            console.log('💰 Arbitrage received:', {
+                                truckId: arbitrageKey,
+                                isFresh,
+                                isDismissed,
+                                hasExisting,
+                                netSavings: data.arbitrage.netSavings
+                            });
+                            
+                            // Only show if fresh, not dismissed, and no existing popup
+                            if (isFresh && !isDismissed && !hasExisting) {
+                                console.log('✅ Showing arbitrage popup!');
+                                newState.arbitrageOpportunity = data.arbitrage;
+                            } else {
+                                console.log('⏭️  Skipping arbitrage:', {
+                                    reason: !isFresh ? 'too soon after connect' : isDismissed ? 'already dismissed' : 'popup already showing'
+                                });
+                            }
+                        }
+                        
+                        return newState;
+                    });
+                }
+                break;
+
             case 'arbitrage_opportunity':
-                if (message.data && 'truckId' in message.data) {
-                    setState(prev => ({
-                        ...prev,
-                        arbitrageOpportunity: message.data as ArbitrageOpportunity,
-                    }));
+                if (message.data && 'truckId' in message.data && isArbitrageFresh()) {
+                    const arbitrage = message.data as ArbitrageOpportunity;
+                    const arbitrageKey = arbitrage.truckId;
+                    
+                    // Only show if not already dismissed/executed
+                    if (!dismissedArbitrageSet.has(arbitrageKey)) {
+                        console.log('💰 Arbitrage opportunity (direct):', message.data);
+                        setState(prev => {
+                            if (prev.arbitrageOpportunity) return prev; // Don't overwrite existing
+                            return {
+                                ...prev,
+                                arbitrageOpportunity: arbitrage,
+                            };
+                        });
+                    }
                 }
                 break;
 
@@ -68,15 +187,12 @@ export function useWebSocket(url: string = 'ws://localhost:8080') {
                 break;
 
             case 'pong':
-                // Handle ping/pong for keepalive
                 break;
 
             default:
                 console.log('Unknown message type:', message.type);
         }
     }, []);
-
-    const connectRef = useRef<(() => void) | undefined>(undefined);
 
     const connect = useCallback(() => {
         try {
@@ -85,6 +201,7 @@ export function useWebSocket(url: string = 'ws://localhost:8080') {
 
             ws.onopen = () => {
                 console.log('✅ WebSocket connected');
+                connectionTimestamp = Date.now(); // Track when we connected
                 setState(prev => ({...prev, connected: true, error: null}));
                 reconnectAttempts.current = 0;
             };
@@ -107,14 +224,13 @@ export function useWebSocket(url: string = 'ws://localhost:8080') {
                 console.log('❌ WebSocket disconnected');
                 setState(prev => ({...prev, connected: false}));
 
-                // Attempt reconnection
                 if (reconnectAttempts.current < maxReconnectAttempts) {
                     reconnectAttempts.current++;
                     const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 10000);
                     console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
 
                     reconnectTimeoutRef.current = setTimeout(() => {
-                        connectRef.current?.();
+                        connect();
                     }, delay);
                 } else {
                     setState(prev => ({
@@ -129,10 +245,6 @@ export function useWebSocket(url: string = 'ws://localhost:8080') {
         }
     }, [url, handleMessage]);
 
-    useEffect(() => {
-        connectRef.current = connect;
-    }, [connect]);
-
     const sendMessage = useCallback((message: Record<string, unknown>) => {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify(message));
@@ -145,32 +257,62 @@ export function useWebSocket(url: string = 'ws://localhost:8080') {
         setState(prev => {
             if (!prev.arbitrageOpportunity) return prev;
 
-            // Send message via WebSocket
+            const truckId = prev.arbitrageOpportunity.truckId;
+            
+            // Mark this arbitrage as handled so it won't reappear
+            dismissedArbitrageSet.add(truckId);
+            // Mark this truck as resolved - stop showing critical alerts
+            resolvedTrucksSet.add(truckId);
+            console.log(`✅ Arbitrage executed for ${truckId} - status changed to resolved`);
+
             if (wsRef.current?.readyState === WebSocket.OPEN) {
                 wsRef.current.send(JSON.stringify({
                     type: 'execute_arbitrage',
-                    truckId: prev.arbitrageOpportunity.truckId,
+                    truckId: truckId,
                 }));
             }
 
-            // Add local event immediately
+            // Update truck status to "resolved"
+            const updatedTrucks = prev.trucks.map(truck => {
+                if (truck.id === truckId) {
+                    return { ...truck, status: 'resolved' as const };
+                }
+                return truck;
+            });
+
+            // Filter out existing critical events for this truck
+            const filteredEvents = prev.events.filter(event => {
+                const isCriticalForThisTruck = event.message.includes(truckId) && 
+                                              event.message.includes('CRITICAL');
+                return !isCriticalForThisTruck;
+            });
+
             const newEvent: AgentEvent = {
                 id: `evt-${Date.now()}`,
                 timestamp: new Date(),
                 type: 'system',
-                message: '✅ Executing arbitrage solution...',
+                message: `✅ ${truckId} RESOLVED - Relief truck dispatched! Problem solved.`,
                 severity: 'info',
             };
 
             return {
                 ...prev,
-                events: [newEvent, ...prev.events],
+                trucks: updatedTrucks,
+                events: [newEvent, ...filteredEvents],
+                arbitrageOpportunity: null,
             };
         });
     }, []);
 
     const dismissArbitrage = useCallback(() => {
-        setState(prev => ({...prev, arbitrageOpportunity: null}));
+        setState(prev => {
+            if (prev.arbitrageOpportunity) {
+                // Mark as dismissed so it won't reappear
+                dismissedArbitrageSet.add(prev.arbitrageOpportunity.truckId);
+                console.log(`❌ Arbitrage dismissed for ${prev.arbitrageOpportunity.truckId} - will not show again`);
+            }
+            return {...prev, arbitrageOpportunity: null};
+        });
     }, []);
 
     useEffect(() => {
@@ -196,4 +338,11 @@ export function useWebSocket(url: string = 'ws://localhost:8080') {
         dismissArbitrage,
         sendMessage,
     };
+}
+
+function isArbitrageFresh(): boolean {
+    if (connectionTimestamp === 0) return false;
+    const elapsed = Date.now() - connectionTimestamp;
+    // Reduced from 5 seconds to 2 seconds to show arbitrage sooner
+    return elapsed > 2000; // Only show arbitrage that comes after 2 seconds of connection
 }
